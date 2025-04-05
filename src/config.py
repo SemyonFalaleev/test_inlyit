@@ -16,5 +16,8 @@ class Settings:
             exit(1)
 
         self.db_url = self.settings.get("db_url")
-
+        self.secret_key_jwt = self.settings.get("secret_key_jwt")
+        self.algoritm_jwt = self.settings.get("algoritm_jwt")
+        self.token_expires = self.settings.get("token_expires")
+        
 settings = Settings()
