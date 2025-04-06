@@ -20,12 +20,13 @@ async def change_review(
         result = await session.execute(select(Review).where(Review.id == rev_id))
         obj = result.scalar_one_or_none()
 
-        await check_admin_or_yours(obj.id, user, Review, session)
-
         if obj == None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Review not found"
             )
+
+        await check_admin_or_yours(obj.id, user, Review, session)
+
         update_data = data.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(obj, field, value)

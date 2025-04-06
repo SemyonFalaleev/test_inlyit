@@ -27,7 +27,7 @@ async def user_unban(
         await session.commit()
         await session.refresh(user)
 
+        return UserGetDTO.model_validate(user, from_attributes=True)
+
     except HTTPException:
         raise
-
-    return user

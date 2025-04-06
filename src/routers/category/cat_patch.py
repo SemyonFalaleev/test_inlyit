@@ -21,6 +21,17 @@ async def patch_category(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Category not found"
             )
+        if data.name:
+            result_cat = await session.execute(
+                select(Category).where(Category.name.ilike(f"{data.name}"))
+            )
+            cat = result_cat.scalar_one_or_none()
+            if cat:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="A category with this name" "already exists",
+                )
+
         update_data = data.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(obj, field, value)
@@ -29,7 +40,7 @@ async def patch_category(
         await session.commit()
         await session.refresh(obj)
 
+        return CategoryGetDTO.model_validate(obj, from_attributes=True)
+
     except HTTPException:
         raise
-
-    return obj

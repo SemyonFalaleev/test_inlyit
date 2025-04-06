@@ -1,29 +1,26 @@
-import json
+import os
+from dotenv import load_dotenv
 
 
 class Settings:
-    def __init__(self, file_path="config.json"):
-        self.file_path = file_path
-        self.load_settings()
+    def __init__(self):
+        load_dotenv()
+        self.override_with_env_vars()
 
-    def load_settings(self):
-        try:
-            with open(self.file_path, "r") as file:
-                self.settings = json.load(file)
-        except FileNotFoundError:
-            print(f"Файл {self.file_path} не найден.")
-            exit(1)
-        except json.JSONDecodeError as e:
-            print(f"Ошибка парсинга JSON: {e}")
-            exit(1)
+    def _get_required_env(self, var_name: str) -> str:
+        value = os.getenv(var_name)
+        if not value:
+            raise ValueError(f"Необходимо указать переменную окружения {var_name}")
+        return value
 
-        self.db_url = self.settings.get("db_url")
-        self.db_url_test = self.settings.get("db_url_test")
-        self.secret_key_jwt = self.settings.get("secret_key_jwt")
-        self.algoritm_jwt = self.settings.get("algoritm_jwt")
-        self.token_expires = self.settings.get("token_expires")
-        self.telegram_bot_token = self.settings.get("telegram_bot_token")
-        self.telegram_chat_id = self.settings.get("telegram_chat_id")
+    def override_with_env_vars(self):
+
+        self.db_url = self._get_required_env("db_url")
+        self.secret_key_jwt = self._get_required_env("secret_key_jwt")
+        self.algorithm_jwt = self._get_required_env("algorithm_jwt")
+        self.token_expires = int(self._get_required_env("token_expires"))
+        self.telegram_bot_token = self._get_required_env("telegram_bot_token")
+        self.telegram_chat_id = int(self._get_required_env("telegram_chat_id"))
 
 
 settings = Settings()

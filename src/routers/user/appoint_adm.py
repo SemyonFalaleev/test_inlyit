@@ -30,8 +30,6 @@ async def appoint_adm(
         session.add(user)
         await session.commit()
         await session.refresh(user)
-
+        return UserGetDTO.model_validate(user, from_attributes=True)
     except HTTPException:
         raise
-
-    return user

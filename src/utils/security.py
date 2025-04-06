@@ -34,7 +34,7 @@ def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
         )
         payload.update({"exp": expire})
         return jwt.encode(
-            payload, settings.secret_key_jwt, algorithm=settings.algoritm_jwt
+            payload, settings.secret_key_jwt, algorithm=settings.algorithm_jwt
         )
     except Exception as e:
         raise HTTPException(
@@ -61,7 +61,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         payload = jwt.decode(
             token.encode("utf-8"),
             settings.secret_key_jwt,
-            algorithms=[settings.algoritm_jwt],
+            algorithms=[settings.algorithm_jwt],
         )
         user_id: str = payload.get("id")
         if not user_id:

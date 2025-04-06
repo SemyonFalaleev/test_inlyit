@@ -1,5 +1,5 @@
-.venv
 __pycache__
-config.json
 .pytest_cache
+.venv
+config.json
 .env

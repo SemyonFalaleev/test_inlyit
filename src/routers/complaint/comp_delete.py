@@ -20,13 +20,11 @@ async def delete_complaint(
     try:
         result = await session.execute(select(Complaint).where(Complaint.id == comp_id))
         obj = result.scalar_one_or_none()
-
-        await check_admin_or_yours(obj.id, user, Complaint, session)
-
         if obj == None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Complaint not found"
             )
+        await check_admin_or_yours(obj.id, user, Complaint, session)
 
         session.delete(obj)
         await session.commit()

@@ -21,7 +21,7 @@ def event_loop():
 
 @pytest_asyncio.fixture(scope="session")
 async def async_engine(event_loop):
-    engine = create_async_engine(settings.db_url_test, echo=False, future=True)
+    engine = create_async_engine(settings.db_url, echo=False, future=True)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield engine
@@ -37,7 +37,6 @@ async def db_session(async_engine):
     )
     async with async_session() as session:
         yield session
-        await session.rollback()
 
 
 @pytest_asyncio.fixture

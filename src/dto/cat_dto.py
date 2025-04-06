@@ -17,4 +17,4 @@ class CategoryGetDTO(CategoryCreateDTO):
 
 
 class CategoryUpdateDTO(BaseModel):
-    name: Optional[str] = None
+    name: str
