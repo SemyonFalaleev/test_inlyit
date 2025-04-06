@@ -1,5 +1,5 @@
 from src.db.base import Base
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, func
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, func
 from sqlalchemy.orm import relationship
 
 class User(Base):
@@ -13,5 +13,6 @@ class User(Base):
     is_banned = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    advertisements = relationship("Advertisement", back_populates="user")
-
+    advertisements = relationship("Advertisement", back_populates="user", cascade="all, delete-orphan")
+    reviews = relationship("Review", back_populates="user")
+    complaints = relationship("Complaint", back_populates="user")
