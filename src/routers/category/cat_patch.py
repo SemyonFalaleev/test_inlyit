@@ -11,7 +11,7 @@ router = APIRouter()
         status_code=status.HTTP_200_OK,
         response_model=CategoryGetDTO
         )
-async def patch_user(cat_id: int,
+async def patch_category(cat_id: int,
                      data: CategoryUpdateDTO,
                      session: AsyncSession = Depends(get_async_db)
                         ) -> CategoryUpdateDTO:

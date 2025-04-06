@@ -2,7 +2,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import desc, func, select
 from src.db.models.category import Category
-from src.dto.adv_dto import AdvertisementGetAllDTO, AdvertisementGetMinDTO
+from src.dto.adv_dto import AdvertisementGetMinDTO
 from src.db.base import AsyncSession, get_async_db
 from src.db.models import Advertisement
 from src.schemas.paginate import PaginatedResponse
@@ -54,7 +54,7 @@ async def get_advertisement_all(
             default=False
         ) ,
         session: AsyncSession = Depends(get_async_db)
-        ) -> AdvertisementGetAllDTO:
+        ) -> PaginatedResponse[AdvertisementGetMinDTO]:
     try: 
 
         query = select(Advertisement).join(Advertisement.categories)

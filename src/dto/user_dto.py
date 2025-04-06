@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, EmailStr, SecretStr
+from pydantic import BaseModel, Field, SecretStr, EmailStr
 from typing import Optional
 
 
@@ -11,7 +11,7 @@ class UserDTO(BaseModel):
 class UserGetDTO(BaseModel):
     name: str = Field(max_length=100)
     surname: str = Field(max_length=100)
-    email: EmailStr
+    email:  EmailStr
     
     
 class UserUpdateDTO(BaseModel):

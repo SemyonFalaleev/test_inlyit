@@ -19,5 +19,8 @@ class Settings:
         self.secret_key_jwt = self.settings.get("secret_key_jwt")
         self.algoritm_jwt = self.settings.get("algoritm_jwt")
         self.token_expires = self.settings.get("token_expires")
+        self.telegram_bot_token = self.settings.get("telegram_bot_token")
+        self.telegram_chat_id = self.settings.get("telegram_chat_id")
+        
         
 settings = Settings()

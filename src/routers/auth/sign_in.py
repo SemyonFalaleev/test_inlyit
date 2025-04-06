@@ -1,9 +1,6 @@
-from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
-from src.dto.auth_dto import UserLoginDTO
-from src.dto.auth_dto import TokenResponse
 from src.db.base import AsyncSession, get_async_db
 from src.db.models import User
 from src.utils.security import verify_password, create_access_token

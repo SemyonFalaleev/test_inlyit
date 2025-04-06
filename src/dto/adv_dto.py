@@ -16,7 +16,6 @@ class AdvertisementUpdateDTO(AdertisementBaseDTO):
     name: Optional[str] = None
     descriptions: Optional[str] = None
     price: Optional[int] = None
-    category_id: Optional[str] = None
 
 class AdvertisementBaseDTO(AdertisementBaseDTO):
     name: str = Field(max_length=150)
@@ -46,11 +45,6 @@ class AdvertisementGetDTO(AdertisementBaseDTO):
     updated_at: datetime
     user: UserGetDTO
     category: CategoryDTO
-
-
-class AdvertisementGetAllDTO(AdertisementBaseDTO):
-    count: int
-    advertisements: List[AdvertisementGetMinDTO] = Field(default_factory=list)
 
 
 

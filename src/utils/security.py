@@ -85,16 +85,17 @@ async def check_admin(user: User = Depends(get_current_user)):
 async def check_admin_or_yours(
     obj_id: int,
     user: User ,
-    db: AsyncSession = Depends(get_async_db)
+    model: Type[Base], # type: ignore
+    db: AsyncSession 
 ):
     try:
         await check_admin(user)
         return user
     except HTTPException as e:
         if e.status_code == status.HTTP_403_FORBIDDEN:
-            result = await db.execute(select(Advertisement
-                                             ).where(Advertisement.id == obj_id, 
-                                            Advertisement.user_id == user.id))
+            result = await db.execute(select(model
+                                             ).where(model.id == obj_id, 
+                                            model.user_id == user.id))
             obj = result.scalar_one_or_none()
             if not obj:
                 raise HTTPException(
