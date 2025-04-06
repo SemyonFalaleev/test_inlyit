@@ -1,190 +1,328 @@
-from fastapi.testclient import TestClient
 import pytest
 from fastapi import status
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
-from unittest.mock import AsyncMock, patch
-
-from src.db.models import User, Category
-from main import app
-from tests.conftest import async_client, auth_headers
-
-client = TestClient(app)
+from sqlalchemy import select, delete
+from src.db.models import Advertisement, Category, User
+from src.utils.security import create_access_token
+from src.dto.adv_dto import AdvertisementUpdateDTO
+import json
+import pytest
+from fastapi import status
+from httpx import AsyncClient
+from sqlalchemy import select, delete
+from src.db.models import Advertisement, Category, User
+from src.utils.security import create_access_token
+import json
 
 
 @pytest.mark.asyncio
-async def test_create_advertisement_success(
-    async_client: AsyncClient, db_session: AsyncSession, auth_headers: dict
+async def test_patch_advertisement_success(
+    async_client: AsyncClient,
+    db_session,
 ):
-    # Setup test data
-    test_user = User(
-        id=1,
-        name="Test",
-        surname="User",
-        email="test@example.com",
-        hashed_password="hashedpass",
-        is_admin=False,
-        is_banned=False,
-    )
+    """Тест успешного обновления объявления владельцем"""
+    try:
+        async with db_session.begin():
+            user = User(
+                name="Test",
+                surname="User",
+                email="test@example.com",
+                hashed_password="hashedpass",
+            )
+            category = Category(name="Test Category")
+            advertisement = Advertisement(
+                name="Old Name",
+                descriptions="Old Description",
+                price=1000,
+                user=user,
+                categories=category,
+            )
+            db_session.add_all([user, category, advertisement])
+            await db_session.commit()
 
-    test_category = Category(id=1, name="Test Category")
+        token = create_access_token(data={"sub": user.email, "id": user.id})
+        headers = {"Authorization": f"Bearer {token}"}
 
-    db_session.add(test_user)
-    db_session.add(test_category)
-    await db_session.commit()
-
-    # Mock dependencies
-    with patch("src.utils.security.get_current_user", return_value=test_user):
-        # Test request
-        adv_data = {
-            "name": "Test Ad",
-            "descriptions": "Test description",
-            "price": 100,
-            "category_id": 1,
+        update_data = {
+            "name": "New Name",
+            "descriptions": "New Description",
+            "price": 2000,
         }
 
-        response = await async_client.post(
-            "/advertisements/", json=adv_data, headers=auth_headers
+        response = await async_client.patch(
+            f"/adv/{advertisement.id}", json=update_data, headers=headers
         )
 
-    # Assertions
-    assert response.status_code == status.HTTP_201_CREATED
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+        assert response_data["name"] == "New Name"
+        assert response_data["descriptions"] == "New Description"
+        assert response_data["price"] == 2000
 
-    response_data = response.json()
-    assert response_data["name"] == adv_data["name"]
-    assert response_data["descriptions"] == adv_data["descriptions"]
-    assert response_data["price"] == adv_data["price"]
-    assert response_data["user"]["id"] == test_user.id
-    assert response_data["category"]["id"] == test_category.id
-
-
-@pytest.mark.asyncio
-async def test_create_advertisement_unauthorized(async_client: AsyncClient):
-    # Test request without auth
-    adv_data = {
-        "name": "Test Ad",
-        "descriptions": "Test description",
-        "price": 100,
-        "category_id": 1,
-    }
-
-    response = await async_client.post("/advertisements/", json=adv_data)
-
-    # Assertions
-    assert response.status_code == status.HTTP_403_FORBIDDEN
+    finally:
+        async with db_session.begin():
+            await db_session.execute(delete(Advertisement))
+            await db_session.execute(delete(Category))
+            await db_session.execute(delete(User))
 
 
 @pytest.mark.asyncio
-async def test_create_advertisement_invalid_category(
-    async_client: AsyncClient, auth_headers: dict, db_session: AsyncSession
+async def test_patch_advertisement_admin_success(
+    async_client: AsyncClient,
+    db_session,
 ):
-    # Setup test user
-    test_user = User(
-        id=1,
-        name="Test",
-        surname="User",
-        email="test@example.com",
-        hashed_password="hashedpass",
-        is_admin=False,
-        is_banned=False,
-    )
+    """Тест успешного обновления объявления администратором"""
+    try:
+        async with db_session.begin():
+            owner = User(
+                name="Owner",
+                surname="User",
+                email="owner@example.com",
+                hashed_password="hashedpass",
+            )
+            admin = User(
+                name="Admin",
+                surname="User",
+                email="admin@example.com",
+                hashed_password="hashedpass",
+                is_admin=True,
+            )
+            category = Category(name="Test Category")
+            advertisement = Advertisement(
+                name="Test Ad",
+                descriptions="Test Description",
+                price=1000,
+                user=owner,
+                categories=category,
+            )
+            db_session.add_all([owner, admin, category, advertisement])
+            await db_session.commit()
 
-    db_session.add(test_user)
-    await db_session.commit()
+        token = create_access_token(data={"sub": admin.email, "id": admin.id})
+        headers = {"Authorization": f"Bearer {token}"}
 
-    # Mock dependencies
-    with patch("src.utils.security.get_current_user", return_value=test_user):
-        # Test request with invalid category
-        adv_data = {
-            "name": "Test Ad",
-            "descriptions": "Test description",
-            "price": 100,
-            "category_id": 999,  # non-existent category
-        }
+        update_data = {"name": "Admin Updated Name"}
 
-        response = await async_client.post(
-            "/advertisements/", json=adv_data, headers=auth_headers
+        response = await async_client.patch(
+            f"/adv/{advertisement.id}", json=update_data, headers=headers
         )
 
-    # Assertions
-    assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert "Foreign key violation" in response.text
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()
+        assert response_data["name"] == "Admin Updated Name"
+
+    finally:
+        async with db_session.begin():
+            await db_session.execute(delete(Advertisement))
+            await db_session.execute(delete(Category))
+            await db_session.execute(delete(User))
 
 
 @pytest.mark.asyncio
-async def test_create_advertisement_missing_required_fields(
-    async_client: AsyncClient, auth_headers: dict
+async def test_patch_advertisement_change_category(
+    async_client: AsyncClient,
+    db_session,
 ):
-    # Test request with missing required field
-    adv_data = {"descriptions": "Test description", "price": 100, "category_id": 1}
+    """Тест успешного обновления категории объявления"""
+    try:
+        async with db_session.begin():
+            user = User(
+                name="Test",
+                surname="User",
+                email="test2@example.com",
+                hashed_password="hashedpass",
+            )
+            category = Category(name="Old Category")
+            new_category = Category(name="New Category")
+            advertisement = Advertisement(
+                name="Test Ad",
+                descriptions="Test Description",
+                price=1000,
+                user=user,
+                categories=category,
+            )
+            db_session.add_all([user, category, new_category, advertisement])
+            await db_session.flush()
 
-    response = await async_client.post(
-        "/advertisements/", json=adv_data, headers=auth_headers
-    )
+        token = create_access_token(data={"sub": user.email, "id": user.id})
+        headers = {"Authorization": f"Bearer {token}"}
 
-    # Assertions
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-    assert "name" in response.text
-
-
-@pytest.mark.asyncio
-async def test_create_advertisement_db_error(
-    async_client: AsyncClient, auth_headers: dict, db_session: AsyncSession
-):
-    # Setup test data
-    test_user = User(
-        id=1,
-        name="Test",
-        surname="User",
-        email="test@example.com",
-        hashed_password="hashedpass",
-        is_admin=False,
-        is_banned=False,
-    )
-
-    test_category = Category(id=1, name="Test Category")
-
-    db_session.add(test_user)
-    db_session.add(test_category)
-    await db_session.commit()
-
-    # Mock dependencies and force DB error
-    with patch(
-        "src.utils.security.get_current_user", return_value=test_user
-    ), patch.object(db_session, "commit", side_effect=Exception("DB error")):
-
-        adv_data = {
-            "name": "Test Ad",
-            "descriptions": "Test description",
-            "price": 100,
-            "category_id": 1,
-        }
-
-        response = await async_client.post(
-            "/advertisements/", json=adv_data, headers=auth_headers
+        response = await async_client.patch(
+            f"/adv/{advertisement.id}?cat_id={new_category.id}",
+            json={},
+            headers=headers,
         )
 
-    # Assertions
-    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-    assert "DB error" in response.text
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["category"]["name"] == "New Category"
+
+    finally:
+        async with db_session.begin():
+            await db_session.execute(delete(Advertisement))
+            await db_session.execute(delete(Category))
+            await db_session.execute(delete(User))
 
 
 @pytest.mark.asyncio
-async def test_create_advertisement_model_validation(
-    async_client: AsyncClient, auth_headers: dict
+async def test_patch_advertisement_unauthorized(
+    async_client: AsyncClient,
+    db_session,
 ):
-    # Test request with invalid data
-    adv_data = {
-        "name": "T" * 151,  # exceeds max length
-        "descriptions": "Test description",
-        "price": 100,
-        "category_id": 1,
-    }
+    """Тест обновления объявления без авторизации"""
+    try:
+        async with db_session.begin():
+            user = User(
+                name="Test",
+                surname="User",
+                email="test3@example.com",
+                hashed_password="hashedpass",
+            )
+            category = Category(name="Test Category")
+            advertisement = Advertisement(
+                name="Test Ad",
+                descriptions="Test Description",
+                price=1000,
+                user=user,
+                categories=category,
+            )
+            db_session.add_all([user, category, advertisement])
+            await db_session.flush()
 
-    response = await async_client.post(
-        "/advertisements/", json=adv_data, headers=auth_headers
-    )
+        update_data = {"name": "New Name"}
 
-    # Assertions
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-    assert "ensure this value has at most 150 characters" in response.text
+        response = await async_client.patch(
+            f"/adv/{advertisement.id}", json=update_data
+        )
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    finally:
+        async with db_session.begin():
+            await db_session.execute(delete(Advertisement))
+            await db_session.execute(delete(Category))
+            await db_session.execute(delete(User))
+
+
+@pytest.mark.asyncio
+async def test_patch_advertisement_not_owner(
+    async_client: AsyncClient,
+    db_session,
+):
+    """Тест обновления чужого объявления"""
+    try:
+        async with db_session.begin():
+            owner = User(
+                name="Owner",
+                surname="User",
+                email="owner@example.com",
+                hashed_password="hashedpass",
+            )
+            other_user = User(
+                name="Other",
+                surname="User",
+                email="other@example.com",
+                hashed_password="hashedpass",
+            )
+            category = Category(name="Test Category")
+            advertisement = Advertisement(
+                name="Test Ad",
+                descriptions="Test Description",
+                price=1000,
+                user=owner,
+                categories=category,
+            )
+            db_session.add_all([owner, other_user, category, advertisement])
+            await db_session.flush()
+
+        token = create_access_token(data={"sub": other_user.email, "id": other_user.id})
+        headers = {"Authorization": f"Bearer {token}"}
+
+        update_data = {"name": "Hacked Name"}
+
+        response = await async_client.patch(
+            f"/adv/{advertisement.id}", json=update_data, headers=headers
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    finally:
+        async with db_session.begin():
+            await db_session.execute(delete(Advertisement))
+            await db_session.execute(delete(Category))
+            await db_session.execute(delete(User))
+
+
+@pytest.mark.asyncio
+async def test_patch_advertisement_not_found(
+    async_client: AsyncClient,
+    db_session,
+):
+    """Тест обновления несуществующего объявления"""
+    try:
+        async with db_session.begin():
+            user = User(
+                name="Test",
+                surname="User",
+                email="test4@example.com",
+                hashed_password="hashedpass",
+            )
+            db_session.add(user)
+            await db_session.flush()
+
+        token = create_access_token(data={"sub": user.email, "id": user.id})
+        headers = {"Authorization": f"Bearer {token}"}
+
+        update_data = {"name": "New Name"}
+
+        response = await async_client.patch(
+            "/adv/999999", json=update_data, headers=headers
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.json()["detail"] == "Advertisement not found"
+
+    finally:
+        async with db_session.begin():
+            await db_session.execute(delete(User))
+
+
+@pytest.mark.asyncio
+async def test_patch_advertisement_invalid_category(
+    async_client: AsyncClient,
+    db_session,
+):
+    """Тест обновления с несуществующей категорией"""
+    try:
+        async with db_session.begin():
+            user = User(
+                name="Test",
+                surname="User",
+                email="test5@example.com",
+                hashed_password="hashedpass",
+            )
+            category = Category(name="Test Category")
+            advertisement = Advertisement(
+                name="Test Ad",
+                descriptions="Test Description",
+                price=1000,
+                user=user,
+                categories=category,
+            )
+            db_session.add_all([user, category, advertisement])
+            await db_session.flush()
+
+        token = create_access_token(data={"sub": user.email, "id": user.id})
+        headers = {"Authorization": f"Bearer {token}"}
+
+        response = await async_client.patch(
+            f"/adv/{advertisement.id}?cat_id=999999", json={}, headers=headers
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.json()["detail"] == "Category not found"
+
+    finally:
+        async with db_session.begin():
+            await db_session.execute(delete(Advertisement))
+            await db_session.execute(delete(Category))
+            await db_session.execute(delete(User))

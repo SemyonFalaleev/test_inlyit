@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
+from src.db.models.category import Category
 from src.db.models.user import User
 from src.dto.adv_dto import AdvertisementCreateDTO, AdvertisementGetDTO
 from src.db.base import AsyncSession, get_async_db
@@ -25,6 +27,16 @@ async def create_advertisement(
     new_obj = Advertisement(**data.model_dump())
     new_obj.user_id = user.id
     try:
+        result = await session.execute(
+            select(Category).where(Category.id == new_obj.category_id)
+        )
+        cat = result.scalar_one_or_none()
+
+        if cat == None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Category not found"
+            )
+
         session.add(new_obj)
         await session.commit()
         await session.refresh(new_obj, ["categories"])

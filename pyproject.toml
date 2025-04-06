@@ -21,13 +21,15 @@ bcrypt = "^4.3.0"
 python-multipart = "^0.0.20"
 aiogram = "^3.19.0"
 pydantic = {version = ">=2.4.1,<2.11", extras = ["email"]}
-pytest = "^7.4.0"
 httpx = "^0.28.1"
 black = "^25.1.0"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.4.0"
+async-factory-boy = "^1.0.1"
+pytest-asyncio = "^0.26.0"
+pytest = "^8.3.5"
 
 [build-system]
 requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

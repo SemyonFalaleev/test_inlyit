@@ -2,6 +2,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing import List, Optional
 from datetime import datetime
 from src.dto.cat_dto import CategoryDTO
+from src.dto.review_dto import ReviewGetDTO
 from src.dto.user_dto import UserGetDTO
 
 
@@ -46,3 +47,4 @@ class AdvertisementGetDTO(AdertisementBaseDTO):
     updated_at: datetime
     user: UserGetDTO
     category: CategoryDTO
+    reviews: Optional[List[ReviewGetDTO]] = None

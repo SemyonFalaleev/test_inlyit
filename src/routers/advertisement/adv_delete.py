@@ -24,13 +24,12 @@ async def delete_advertisement(
             select(Advertisement).where(Advertisement.id == adv_id)
         )
         obj = result.scalar_one_or_none()
-
-        await check_admin_or_yours(obj.id, user, session)
-
         if obj == None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Advertisement not found"
             )
+        await check_admin_or_yours(obj.id, user, Advertisement, session)
+
         await session.delete(obj)
         await session.commit()
 
