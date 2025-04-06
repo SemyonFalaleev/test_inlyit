@@ -6,10 +6,11 @@ from src.db.models import User
 router = APIRouter()
 
 
-@router.post("/", 
-        status_code=status.HTTP_201_CREATED,
-        response_model=UserDTO,
-        )
+@router.post(
+    "/",
+    status_code=status.HTTP_201_CREATED,
+    response_model=UserDTO,
+)
 async def create_user(data: UserDTO, session: AsyncSession = Depends(get_async_db)):
     new_user = User(**data.model_dump())
     try:
@@ -20,5 +21,3 @@ async def create_user(data: UserDTO, session: AsyncSession = Depends(get_async_d
         return None
 
     return new_user
-
-    

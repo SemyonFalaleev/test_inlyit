@@ -10,42 +10,41 @@ from src.utils.security import check_auth, get_current_user
 router = APIRouter()
 
 
-@router.post("/{adv_id}", 
-        dependencies=[Depends(check_auth)],
-        status_code=status.HTTP_201_CREATED,
-        response_model=ReviewGetDTO,
-        )
+@router.post(
+    "/{adv_id}",
+    dependencies=[Depends(check_auth)],
+    status_code=status.HTTP_201_CREATED,
+    response_model=ReviewGetDTO,
+)
 async def create_review(
-        adv_id: int,
-        data: ReviewCreateDTO, 
-        session: AsyncSession = Depends(get_async_db),
-        user: User = Depends(get_current_user)
-        ) -> ReviewGetDTO:
+    adv_id: int,
+    data: ReviewCreateDTO,
+    session: AsyncSession = Depends(get_async_db),
+    user: User = Depends(get_current_user),
+) -> ReviewGetDTO:
     try:
 
-        result = await session.execute(select(Advertisement).where(Advertisement.id == adv_id))
+        result = await session.execute(
+            select(Advertisement).where(Advertisement.id == adv_id)
+        )
         adv = result.scalar_one_or_none()
 
-        
         if adv == None:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Advertisement not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Advertisement not found"
             )
         if adv.user_id == user.id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="You cannot leave reviews on your ads"
+                detail="You cannot leave reviews on your ads",
             )
-        
-        new_obj = Review(**data.model_dump(),
-                        user_id = user.id,
-                        adv_id = adv_id)
-    
+
+        new_obj = Review(**data.model_dump(), user_id=user.id, adv_id=adv_id)
+
         session.add(new_obj)
         await session.commit()
         await session.refresh(new_obj)
-    
+
         return ReviewGetDTO.model_validate(new_obj, from_attributes=True)
 
     except Exception as exp:

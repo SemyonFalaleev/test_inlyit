@@ -1,4 +1,4 @@
-from pydantic import BaseModel,  EmailStr, SecretStr
+from pydantic import BaseModel, EmailStr, SecretStr
 
 
 class UserLoginDTO(BaseModel):

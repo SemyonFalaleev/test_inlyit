@@ -7,22 +7,19 @@ from src.db.models import Category
 router = APIRouter()
 
 
-@router.patch("/{cat_id}",
-        status_code=status.HTTP_200_OK,
-        response_model=CategoryGetDTO
-        )
-async def patch_category(cat_id: int,
-                     data: CategoryUpdateDTO,
-                     session: AsyncSession = Depends(get_async_db)
-                        ) -> CategoryUpdateDTO:
-    try: 
+@router.patch(
+    "/{cat_id}", status_code=status.HTTP_200_OK, response_model=CategoryGetDTO
+)
+async def patch_category(
+    cat_id: int, data: CategoryUpdateDTO, session: AsyncSession = Depends(get_async_db)
+) -> CategoryUpdateDTO:
+    try:
         result = await session.execute(select(Category).where(Category.id == cat_id))
         obj = result.scalar_one_or_none()
 
         if obj == None:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Category not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Category not found"
             )
         update_data = data.model_dump(exclude_unset=True)
         for field, value in update_data.items():
@@ -31,9 +28,8 @@ async def patch_category(cat_id: int,
         session.add(obj)
         await session.commit()
         await session.refresh(obj)
-        
-        
+
     except HTTPException:
         raise
-    
-    return  obj
+
+    return obj

@@ -9,17 +9,14 @@ from src.utils.security import check_admin_or_yours, get_current_user
 router = APIRouter()
 
 
-@router.patch("/{rev_id}",
-        status_code=status.HTTP_200_OK,
-        response_model=ReviewGetDTO
-        )
+@router.patch("/{rev_id}", status_code=status.HTTP_200_OK, response_model=ReviewGetDTO)
 async def change_review(
-        rev_id: int,
-        data: ReviewUpdateDTO,
-        session: AsyncSession = Depends(get_async_db),
-        user: User = Depends(get_current_user)
-        ) -> ReviewUpdateDTO:
-    try: 
+    rev_id: int,
+    data: ReviewUpdateDTO,
+    session: AsyncSession = Depends(get_async_db),
+    user: User = Depends(get_current_user),
+) -> ReviewUpdateDTO:
+    try:
         result = await session.execute(select(Review).where(Review.id == rev_id))
         obj = result.scalar_one_or_none()
 
@@ -27,8 +24,7 @@ async def change_review(
 
         if obj == None:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Review not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Review not found"
             )
         update_data = data.model_dump(exclude_unset=True)
         for field, value in update_data.items():
@@ -38,8 +34,6 @@ async def change_review(
         await session.commit()
         await session.refresh(obj)
 
-        return  obj
+        return obj
     except HTTPException:
         raise
-    
-    

@@ -16,17 +16,16 @@ from src.utils.logg import logger, log_request_middleware
 
 app = FastAPI()
 
+
 @app.exception_handler(Exception)
 async def global_handler(request: Request, exc: Exception):
     await bot.send_message(
         chat_id=settings.telegram_chat_id,
-        text=f"🔥 Ошибка в {request.url}:\n{str(exc)}"
+        text=f"🔥 Ошибка в {request.url}:\n{str(exc)}",
     )
     logger.error(f"Unhandled exception: {exc}", exc_info=True)
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal Server Error"}
-    )
+    return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})
+
 
 app.middleware("http")(log_request_middleware)
 

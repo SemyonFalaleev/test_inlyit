@@ -8,13 +8,13 @@ class UserDTO(BaseModel):
     email: EmailStr
     hashed_password: SecretStr
 
+
 class UserGetDTO(BaseModel):
     name: str = Field(max_length=100)
     surname: str = Field(max_length=100)
-    email:  EmailStr
-    
-    
+    email: EmailStr
+
+
 class UserUpdateDTO(BaseModel):
     name: Optional[str] = None
     surname: Optional[str] = None
-

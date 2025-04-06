@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from src.routers.advertisement.adv_post import router as post_router
-from src.routers.advertisement.adv_delete  import router as delete_router
+from src.routers.advertisement.adv_delete import router as delete_router
 from src.routers.advertisement.adv_get import router as get_router
 from src.routers.advertisement.adv_patch import router as patch_router
 from src.routers.advertisement.adv_get_all import router as get_all_router

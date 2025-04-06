@@ -1,12 +1,14 @@
 import json
 
+
 class Settings:
-    def __init__(self, file_path='config.json'):
+    def __init__(self, file_path="config.json"):
         self.file_path = file_path
         self.load_settings()
+
     def load_settings(self):
         try:
-            with open(self.file_path, 'r') as file:
+            with open(self.file_path, "r") as file:
                 self.settings = json.load(file)
         except FileNotFoundError:
             print(f"Файл {self.file_path} не найден.")
@@ -21,6 +23,6 @@ class Settings:
         self.token_expires = self.settings.get("token_expires")
         self.telegram_bot_token = self.settings.get("telegram_bot_token")
         self.telegram_chat_id = self.settings.get("telegram_chat_id")
-        
-        
+
+
 settings = Settings()

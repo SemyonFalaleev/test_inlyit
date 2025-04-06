@@ -18,5 +18,3 @@ router.include_router(patch_user)
 router.include_router(user_ban)
 router.include_router(user_unban)
 router.include_router(appoint_adm)
-
-

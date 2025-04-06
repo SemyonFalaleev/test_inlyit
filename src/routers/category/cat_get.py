@@ -7,24 +7,20 @@ from src.db.models import Category
 router = APIRouter()
 
 
-@router.get("/{cat_id}", 
-        status_code=status.HTTP_200_OK,
-        response_model=CategoryGetDTO
-        )
-async def get_category(cat_id: int,
-                   session: AsyncSession = Depends(get_async_db)
-                      ) -> CategoryGetDTO:
-    try: 
+@router.get("/{cat_id}", status_code=status.HTTP_200_OK, response_model=CategoryGetDTO)
+async def get_category(
+    cat_id: int, session: AsyncSession = Depends(get_async_db)
+) -> CategoryGetDTO:
+    try:
         result = await session.execute(select(Category).where(Category.id == cat_id))
         obj = result.scalar_one_or_none()
 
         if obj == None:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Category not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Category not found"
             )
-        
+
     except HTTPException:
         raise
-    
-    return  obj
+
+    return obj
