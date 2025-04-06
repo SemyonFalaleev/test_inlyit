@@ -2,113 +2,157 @@
 
 ## Описание
 
-Тестовое задание выполнено в полном объеме.    
-Реализованы все возможности пользовталя , администратора и доплнительный функционал
+Тестовое задание выполнено в полном объеме.  
+Реализованы все возможности пользователя, администратора и дополнительный функционал.
 
 ## Стек технологий
 
-*   **Язык программирования:** Python 3.12+
-*   **Фреймворк:** FastAPI 0.115.12+
-*   **ORM:** SQLAlchemy 2.0.40+
-*   **Асинхронный драйвер PostgreSQL:** asyncpg 0.30.0+
-*   **Миграции базы данных:** Alembic 1.15.2+
-*   **Веб-сервер:** Uvicorn 0.34.0+
-*   **Аутентификация:** Passlib 1.7.4+, PyJWT 2.10.1+, bcrypt 4.3.0+
-*   **Валидация данных:** Pydantic >=2.4.1,<2.11
-*   **HTTP-клиент:** httpx 0.28.1+
-*   **Тестирование:** pytest 8.3.5+, pytest-asyncio 0.26.0+
-*   **Форматирование кода:** Black 25.1.0+
+- Язык программирования: Python 3.12+
+- Фреймворк: FastAPI 0.115.12+
+- ORM: SQLAlchemy 2.0.40+
+- Асинхронный драйвер PostgreSQL: asyncpg 0.30.0+
+- Миграции базы данных: Alembic 1.15.2+
+- Веб-сервер: Uvicorn 0.34.0+
+- Аутентификация: Passlib 1.7.4+, PyJWT 2.10.1+, bcrypt 4.3.0+
+- Валидация данных: Pydantic >=2.4.1,<2.11
+- HTTP-клиент: httpx 0.28.1+
+- Тестирование: pytest 8.3.5+, pytest-asyncio 0.26.0+
+- Форматирование кода: Black 25.1.0+
 
 ## Развертывание проекта
 
-### Предварительные требования
+### Вариант 1: Локальная установка (без Docker)
 
-*   Установленный Python 3.12+
-*   Установленный Poetry (пакетный менеджер Python)
+#### Предварительные требования
+- Установленный Python 3.12+
+- Установленный Poetry (пакетный менеджер Python)
+- PostgreSQL 13+
 
-### Шаги
+#### Шаги
+1. Клонируйте репозиторий:
+   ```bash
+   git clone git@github.com:SemyonFalaleev/test_inlyit.git
+   cd test_inlyit
+   ```
 
-1.  **Клонируйте репозиторий:**
+2. Установите зависимости:
+   ```bash
+   poetry install
+   ```
 
-    ```bash
-    git clone git@github.com:SemyonFalaleev/test_inlyit.git 
-    ```
+3. Настройте переменные окружения (создайте `.env` файл):
+   ```ini
+   db_url=postgresql+asyncpg://user:password@localhost/db_name
+   secret_key_jwt=your_secret_key
+   algorithm_jwt=HS256
+   token_expires=30
+   telegram_bot_token=your_tg_bot_token
+   telegram_chat_id=your_chat_id
+   ```
 
-2.  **Установите зависимости с помощью Poetry:**
+4. Примените миграции:
+   ```bash
+   poetry run alembic upgrade head
+   ```
+5. Для корректной уведомлений в телеграм чат,     
+   необходимо добавить бота в телеграм чат,    
+   `id` которого прописанно в переменной окружения
+   `telegram_chat_id`, и сделать его администратором.
+   
+6. Запустите сервер:
+   ```bash
+   poetry run uvicorn main:app --reload
+   ```
 
-    ```bash
-    poetry install
-    ```
+### Вариант 2: Запуск через Docker
 
-3.  **Настройте переменные окружения**
+#### Предварительные требования
+- Установленный Docker
+- Установленный Docker Compose (рекомендуется)
 
-    Например оздайте файл `.env` в корне проекта и добавьте необходимые настройки. Пример:
+#### Инструкция по сборке и запуску
 
-    ```.env
-        db_url=postgresql+asyncpg://<user>:<password>@<host>/<db_name>
-        secret_key_jwt=<your_secret_key>
-        algorithm_jwt=<your_algorithm>
-        token_expires=<int>
-        telegram_bot_token=<your_tg_bot_token>
-        telegram_chat_id=<your_chat_id>
-    ```
+1. Соберите образ:
+   ```bash
+   docker build -t advertisement-service .
+   ```
 
-    *   `db_url`: URL для подключения к основной базе данных PostgreSQL.
-    *   `secret_key_jwt`: Секретный ключ для подписи JWT токенов.
-    *   `algoritm_jwt`: Алгоритм шифрования JWT.
-    *   `token_expires`: Время жизни access токена в минутах.
-    *   `telegram_bot_token`: Токен вашего Telegram бота.
-    *   `telegram_chat_id`: ID чата Telegram, куда будут отправляться уведомления.
+2. Запустите контейнер (замените значения переменных окружения на свои):
+   ```bash
+   docker run -d -p 8000:8000 \
+     -e db_url="postgresql+asyncpg://user:password@host/db_name" \
+     -e secret_key_jwt="your_secret_key" \
+     -e algorithm_jwt="HS256" \
+     -e token_expires="30" \
+     -e telegram_bot_token="your_tg_bot_token" \
+     -e telegram_chat_id="your_chat_id" \
+     --name ad_service advertisement-service
+   ```
 
-4.  **Примените миграции базы данных:**
+#### Альтернативно с Docker Compose
 
-    ```bash
-    poetry run alembic upgrade head
-    ```
+1. Создайте `docker-compose.yml`:
+   ```yaml
+   version: '3.8'
 
-    Убедитесь, что Alembic настроен правильно и файл `alembic.ini` указывает на вашу базу данных.
+   services:
+     app:
+       build: .
+       ports:
+         - "8000:8000"
+       environment:
+         - db_url=postgresql+asyncpg://user:password@host/db_name
+         - secret_key_jwt=your_secret_key
+         - algorithm_jwt=HS256
+         - token_expires=30
+         - telegram_bot_token=your_tg_bot_token
+         - telegram_chat_id=your_chat_id
+       depends_on:
+         - db
 
+     db:
+       image: postgres:13
+       environment:
+         POSTGRES_USER: user
+         POSTGRES_PASSWORD: password
+         POSTGRES_DB: db_name
+       ports:
+         - "5432:5432"
+       volumes:
+         - postgres_data:/var/lib/postgresql/data
+
+   volumes:
+     postgres_data:
+   ```
+
+2. Запустите:
+   ```bash
+   docker-compose up -d
+   ```
 ## Конфигурация
 
-Проект использует файл `config.json` для конфигурации. Вы можете настроить следующие параметры:
+Проект использует переменные окружения для конфигурации. Основные параметры:
 
-*   `db_url`: URL для подключения к основной базе данных PostgreSQL.
-*   `secret_key_jwt`: Секретный ключ для подписи JWT токенов.
-*   `algoritm_jwt`: Алгоритм шифрования JWT (по умолчанию HS256).
-*   `token_expires`: Время жизни access токена в минутах (по умолчанию 30).
-*   `telegram_bot_token`: Токен вашего Telegram бота.
-*   `telegram_chat_id`: ID чата Telegram, куда будут отправляться уведомления.
+- `db_url`: URL для подключения к PostgreSQL
+- `secret_key_jwt`: Секретный ключ для JWT
+- `algorithm_jwt`: Алгоритм шифрования (по умолчанию HS256)
+- `token_expires`: Время жизни токена в минутах (по умолчанию 30)
+- `telegram_bot_token`: Токен Telegram бота
+- `telegram_chat_id`: ID чата для уведомлений
 
-Измените файл `config.json` в соответствии с вашими потребностями.
+## Документация API
 
-## Запуск проекта
-
-1.  **Запустите Uvicorn:**
-
-    ```bash
-    poetry run uvicorn main:app 
-    ```
-
-    *   `main:app`: Указывает на файл `main.py` и переменную `app` (экземпляр FastAPI).
-
-### Документация API
-
-FastAPI автоматически генерирует документацию API в формате OpenAPI (Swagger UI) и ReDoc. Вы можете получить доступ к документации по следующим URL:
-
-*   Swagger UI: `http://localhost:8000/docs`
-
-Замените `localhost:8000` на адрес и порт, на котором запущен ваш сервис.
-
-### Примеры запросов
-
-Примеры запросов можно найти в документации API.
+После запуска сервера документация будет доступна по адресам:
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
 
 ## Тестирование
 
-Перед началом тестирования, необходимо чтобы переменная окружения `db_url`    
-содержала ссылку на пустую базу данных.
-
-Для запуска тестов используйте следующую команду:
-
+Для запуска тестов:
 ```bash
 poetry run pytest
+```
+Или через Docker:
+```bash
+docker exec ad_service pytest
+```
